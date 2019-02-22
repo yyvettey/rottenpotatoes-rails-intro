@@ -11,11 +11,22 @@ class MoviesController < ApplicationController
   end
 
   def index
-    
+    if session[:ratings].nil?
+      session[:ratings] = Movie.uniq.pluck(:rating)
+    end
+
     if params[:ratings].nil?
-      @movies = Movie.where(rating: Movie.uniq.pluck(:rating)).order(params[:sort])
+      flash.keep
+      redirect_to movies_path(:ratings=>session[:ratings],:sort=>params[:sort])
+    elsif params[:sort].nil? && !session[:sort].nil?
+      flash.keep
+      redirect_to movies_path(:ratings=>params[:ratings],:sort=>session[:sort])
     else
-      @movies = Movie.where(rating: params[:ratings].keys).order(params[:sort])
+      session[:sort] = params[:sort]
+      if Hash === params[:ratings]
+        session[:ratings] = params[:ratings].keys
+      end
+      @movies = Movie.where(rating: session[:ratings]).order(params[:sort])
     end
     
   end
